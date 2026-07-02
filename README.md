@@ -2,8 +2,8 @@
 
 **DID**: `did:web:etzhayyim.github.io:com-etzhayyim-junbi`
 **Namespace**: `com.etzhayyim.junbi.*`
-**ADR**: ADR-2607021800 (R0 + R1 + R2, 2026-07-02)
-**Status**: R2 — oracle attestation feed + rebalance-proposer cell + toritate cross-ref + EN credit-limit sizing (owner-ratified 2026-07-02)
+**ADR**: ADR-2607021800 (R0 + R1 + R2 + R3a, 2026-07-02)
+**Status**: R3a — CBDC attestation intake + Council activation machinery landed; **R3b (actual e-CNY activation) is an ops/legal act** — per-jurisdiction analysis + Council Lv7+ unanimity + real authorized-operator custody, not code
 **Sibling actors**: kawase-yui (ADR-2605282200 — multi-stable pool precedent),
 toritate (accounting), chigiri (disputes)
 
@@ -72,6 +72,7 @@ denominate EN **credit-limit sizing**. Nothing here mints or burns EN (J12).
 | `junbi.cell` (`.clj`) | rebalance-proposer cell — ONE tick = ONE bounded observe→propose run (durable outer loop invokes it; no internal loop); every tick audits its rate attestations |
 | `junbi.toritate` (`.cljc`) | `com.etzhayyim.toritate.ledgerEntry` emission for settled movements (G3/G4 on-chain-only, G12 no-payroll mirrored); EURC/JPYC → `nativeAsset "n-a"` until toritate extends its enum |
 | `junbi.credit` (`.cljc`) | HAKARI-denominated EN credit-limit sizing (LTV + per-member cap, Council policy) — sizes only, never mints/burns EN (J12) |
+| `junbi.cbdc` (`.cljc`) | Tier-2 CBDC operator-attestation intake (allowlist + freshness + injected signature verify — unverified never becomes a holding) + Council activation validation (unanimity + legal analysis + valid custody attestation, J9) |
 
 ## Phase ladder
 
@@ -80,11 +81,12 @@ denominate EN **credit-limit sizing**. Nothing here mints or burns EN (J12).
 | **R0** | pure `.cljc` core: params validation, NAV, drift, rebalance proposals, TreasuryGovernor | landed 2026-07-02 |
 | **R1** | langgraph-clj StateGraph actor; banking double-entry; Base read surface (USDC + EURC readable; **JPYC read unlocks when Council attests its canonical Base address** — never faked) | landed 2026-07-02 (owner-ratified) |
 | **R2** | Chainlink attestation feed (USDC+EURC; **JPY/USD absent on Base** — JPYC rate stays unattested until Council attests an alternative); rebalance-proposer cell; toritate ledgerEntry cross-ref; HAKARI-denominated EN credit-limit sizing | landed 2026-07-02 (owner-ratified) |
-| R3 | +e-CNY Tier-2 (jurisdiction legal analysis + Council Lv7+ unanimity) | post-R2 |
+| **R3a** | CBDC attestation intake (operator attestations, latest-wins fold, tick integration + audit) + Council activation machinery (`cbdc/activate` refuses incomplete records) | landed 2026-07-02 (owner-ratified) |
+| R3b | actual e-CNY activation: per-jurisdiction legal analysis + Council Lv7+ unanimity + real authorized-operator wallet custody — **ops/legal, not code**; foreign-entity e-CNY access is pilot-corridor-limited today | blocked on ops |
 
 ## Develop
 
 ```bash
 clojure -M:lint      # clj-kondo (errors fail)
-clojure -M:dev:test  # 41 tests / 146 assertions (core, governor, ledger, graph, chain, oracle, cell, toritate, credit)
+clojure -M:dev:test  # 45 tests / 168 assertions (core, governor, ledger, graph, chain, oracle, cell, toritate, credit, cbdc)
 ```

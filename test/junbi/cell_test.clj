@@ -65,6 +65,34 @@
       (is (= [:rate-attested :rate-attested :commit]
              (mapv :junbi.audit/type (audit/entries store)))))))
 
+(deftest tier2-attestations-flow-through-the-tick
+  (testing "R3a — accepted + rejected CBDC attestations are merged and audited"
+    (let [store (new-store)
+          actor (graph/build store)
+          operator "did:web:custodian.example"
+          {:keys [observation]}
+          (cell/tick! actor store
+                      {:transport (routed-transport)
+                       :rpc-url "http://rpc"
+                       :holder holder
+                       :params usdc-eurc-params
+                       :now now
+                       :thread-id "tick-cbdc"
+                       :cbdc {:attestations
+                              [{:asset :ecny :amount-atomic 500000
+                                :attester-did operator :attested-at (- now 60)
+                                :ref "bafy-doc" :sig "good-sig"}
+                               {:asset :ecny :amount-atomic 900000
+                                :attester-did "did:web:stranger"
+                                :attested-at (- now 60) :sig "good-sig"}]
+                              :attesters #{operator}
+                              :verify-fn (fn [_ _ sig] (= "good-sig" sig))}})]
+      (is (= 500000 (get-in observation [:tier2 :holdings :ecny :amount])))
+      (is (= 1 (count (get-in observation [:tier2 :rejected]))))
+      (let [types (frequencies (map :junbi.audit/type (audit/entries store)))]
+        (is (= 1 (:cbdc-attested types)))
+        (is (= 1 (:cbdc-rejected types)))))))
+
 (deftest balanced-reserve-tick-is-noop
   (testing "on-target reserve → no proposal → :noop (rate attestations still audited)"
     (let [store (new-store)
