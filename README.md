@@ -2,8 +2,8 @@
 
 **DID**: `did:web:etzhayyim.github.io:com-etzhayyim-junbi`
 **Namespace**: `com.etzhayyim.junbi.*`
-**ADR**: ADR-2607021800 (R0 scaffold, 2026-07-02)
-**Status**: R0 scaffold — pure `.cljc` core + tests
+**ADR**: ADR-2607021800 (R0 scaffold + R1, 2026-07-02)
+**Status**: R1 — StateGraph TreasuryActor + banking double-entry + Base L2 read surface (owner-ratified 2026-07-02)
 **Sibling actors**: kawase-yui (ADR-2605282200 — multi-stable pool precedent),
 toritate (accounting), chigiri (disputes)
 
@@ -58,18 +58,29 @@ EN stays net-zero, non-minted mutual credit
 cross-boundary settlement asset from single-USDC to the basket and may
 denominate EN **credit-limit sizing**. Nothing here mints or burns EN (J12).
 
+## Namespaces (R1)
+
+| ns | Role |
+|---|---|
+| `junbi.core` (`.cljc`) | pure basket math — params validation, effective weights, NAV, drift, rebalance proposals |
+| `junbi.governor` (`.cljc`) | TreasuryGovernor — J1..J12 verdicts (:approve/:reject/:human) |
+| `junbi.ledger` (`.cljc`) | kotoba-lang/banking double-entry — reserve chart, acquisition/rebalance postings, J8 |
+| `junbi.audit` (`.cljc`) | append-only audit ledger over the langchain.db `:db-api` map (in-mem ‖ Datomic ‖ kotoba pod) |
+| `junbi.graph` (`.cljc`) | TreasuryActor StateGraph — intake→advise→govern→decide→commit\|hold, `interrupt-before :request-approval` (J10) |
+| `junbi.chain` (`.clj`) | read-only Base L2 ERC-20 observation over base-l2's injected `ITransport` — no keys, no signing |
+
 ## Phase ladder
 
-| Phase | Scope |
-|---|---|
-| **R0** (this) | pure `.cljc` core: params validation, NAV, drift, rebalance proposals, TreasuryGovernor |
-| R1 | USDC+JPYC live (base-l2 ERC-4337 reads); kotoba-lang/banking wiring; langgraph-clj StateGraph |
-| R2 | +EURC live; rebalance-proposer cell; toritate cross-ref; EN credit-limit denomination |
-| R3 | +e-CNY Tier-2 (jurisdiction legal analysis + Council Lv7+ unanimity) |
+| Phase | Scope | State |
+|---|---|---|
+| **R0** | pure `.cljc` core: params validation, NAV, drift, rebalance proposals, TreasuryGovernor | landed 2026-07-02 |
+| **R1** | langgraph-clj StateGraph actor; banking double-entry; Base read surface (USDC + EURC readable; **JPYC read unlocks when Council attests its canonical Base address** — never faked) | landed 2026-07-02 (owner-ratified) |
+| R2 | live oracle attestation feed; rebalance-proposer cell; toritate cross-ref; EN credit-limit denomination | next |
+| R3 | +e-CNY Tier-2 (jurisdiction legal analysis + Council Lv7+ unanimity) | post-R2 |
 
 ## Develop
 
 ```bash
-clojure -M:lint     # clj-kondo (errors fail)
-clojure -M:test     # core + governor tests
+clojure -M:lint      # clj-kondo (errors fail)
+clojure -M:dev:test  # 24 tests / 89 assertions (core, governor, ledger, graph, chain)
 ```

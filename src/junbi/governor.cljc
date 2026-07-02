@@ -6,7 +6,8 @@
    this namespace decides :approve / :reject / :human.
 
    Pure .cljc — no I/O. Verdicts reference the CI-greppable gates J1..J12."
-  (:require [junbi.core :as core]))
+  (:require [junbi.core :as core]
+            [junbi.ledger :as ledger]))
 
 (def forbidden-actions
   "Action types that are structurally impossible — rejected regardless of
@@ -86,7 +87,9 @@
     (review-execute action)
 
     (= type :ledger/post)
-    (if (core/balanced? (:entries action))
+    (if (if-let [p (:posting action)]
+          (ledger/posting-ok? p)                       ; R1: kotoba-lang/banking
+          (core/balanced? (:entries action)))          ; R0 raw-entry fallback
       approve
       (reject :j8 "unbalanced double-entry posting"))
 
