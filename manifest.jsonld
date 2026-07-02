@@ -1,0 +1,21 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://etzhayyim.com/ns/actor-manifest"
+  ],
+  "@type": "ActorManifest",
+  "id": "did:web:etzhayyim.github.io:com-etzhayyim-junbi",
+  "name": "junbi",
+  "displayName": "準備 — Reserve Treasury Actor + HAKARI Basket",
+  "displayNameJa": "準備",
+  "description": "etzhayyim reserve treasury actor: holds the reserve of fiat-backed currencies issued by trusted issuers with the HAKARI (秤) basket; CBDC attestation intake + Council activation machinery (ADR-2607021800 R0–R3a; R3b e-CNY activation is an ops/legal act gated by Council Lv7+ unanimity). Sibling actors: kawase-yui, toritate, chigiri.",
+  "tier": "Tier-B",
+  "parentActor": null,
+  "firstTouchChannelInvariant": "app-aozora — com.atproto.repo.createRecord (collection com.etzhayyim.apps.junbi). publication = SPEECH (autonomous); NOT actuation.",
+  "lexicons": [
+    "com.etzhayyim.apps.junbi.reserveAttestation"
+  ],
+  "adr": {
+    "topology": "com-junkawasaki:adr:2607022300"
+  }
+}
